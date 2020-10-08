@@ -5,6 +5,7 @@
 typedef unsigned char byte;
 #include "Razer\ChromaAnimationAPI.h"
 #include <mutex>
+#include <unordered_map>
 #include <iostream>
 #include <fstream>
 #include <iostream>
@@ -33,6 +34,21 @@ const char* ANIMATION_FINAL_KEYPAD = "Dynamic\\Final_Keypad.chroma";
 const char* ANIMATION_FINAL_MOUSE = "Dynamic\\Final_Mouse.chroma";
 const char* ANIMATION_FINAL_MOUSEPAD = "Dynamic\\Final_Mousepad.chroma";
 
+class DeviceFrameIndex
+{
+public:
+	DeviceFrameIndex() {
+		_mFrameIndex[(int)EChromaSDKDeviceEnum::DE_ChromaLink] = 0;
+		_mFrameIndex[(int)EChromaSDKDeviceEnum::DE_Headset] = 0;
+		_mFrameIndex[(int)EChromaSDKDeviceEnum::DE_Keyboard] = 0;
+		_mFrameIndex[(int)EChromaSDKDeviceEnum::DE_Keypad] = 0;
+		_mFrameIndex[(int)EChromaSDKDeviceEnum::DE_Mouse] = 0;
+		_mFrameIndex[(int)EChromaSDKDeviceEnum::DE_Mousepad] = 0;
+	}
+	// Index corresponds to EChromaSDKDeviceEnum;
+	int _mFrameIndex[6];
+};
+
 struct Effect
 {
 public:
@@ -43,6 +59,8 @@ public:
 	int _mSpeed = 1;
 	string _mBlend = "";
 	string _mMode = "";
+
+	DeviceFrameIndex _mFrameIndex;
 };
 
 struct Scene
@@ -50,6 +68,8 @@ struct Scene
 public:
 	vector<Effect> _mEffects;
 };
+
+static int _mCurrentScene = 0;
 
 bool StringStartsWith(const string& str, const string& search)
 {
@@ -305,6 +325,8 @@ extern "C"
 	{
 		lock_guard<mutex> guard(_sMutex); //make sure we aren't doing things while animations are playing
 
+		_mCurrentScene = sceneIndex;
+
 		return 0;
 	}	
 }
@@ -405,6 +427,182 @@ void SetAmbientColor(int ambientColor,
 	}
 }
 
+void BlendAnimation1D(const Effect& effect, DeviceFrameIndex& deviceFrameIndex, int device, EChromaSDKDevice1DEnum device1d, const char* animationName,
+	int* colors, int* tempColors)
+{
+	const int size = GetColorArraySize1D(device1d);
+	const int frameId = deviceFrameIndex._mFrameIndex[device];
+	const int frameCount = ChromaAnimationAPI::GetFrameCountName(animationName);
+	if (frameId < frameCount)
+	{
+		cout << animationName << ": " << (1 + frameId) << " of " << frameCount << endl;
+		float duration;
+		int animationId = ChromaAnimationAPI::GetAnimation(animationName);
+		ChromaAnimationAPI::GetFrame(animationId, frameId, &duration, tempColors, size);
+		for (int i = 0; i < size; ++i)
+		{
+			int oldColor = colors[i];
+			int oldRed = oldColor & 0xFF;
+			int oldGreen = (oldColor & 0xFF00) >> 8;
+			int oldBlue = (oldColor & 0xFF0000) >> 16;
+
+			int tempColor = tempColors[i];
+			int tempRed = tempColor & 0xFF;
+			int tempGreen = (tempColor & 0xFF00) >> 8;
+			int tempBlue = (tempColor & 0xFF0000) >> 16;
+
+			int red = 0;
+			int green = 0;
+			int blue = 0;
+
+			// add colors
+			/*
+			int red = (oldRed + tempRed) % 255;
+			int green = (oldGreen + tempGreen) % 255;
+			int blue = (oldGreen + tempBlue) % 255;
+			*/
+
+			// Use max R G B component
+			/*
+			int red = max(oldRed, tempRed);
+			int green = max(oldGreen, tempGreen);
+			int blue = max(oldGreen, tempBlue);
+			*/
+
+			// average R G B components
+			/*
+			int red = (oldRed + tempRed) / 2;
+			int green = (oldGreen + tempGreen) / 2;
+			int blue = (oldGreen + tempBlue) / 2;
+			*/
+
+			//if (effect._mBlend.compare("lerp") == 0)
+			{
+				red = tempRed;
+				green = tempGreen;
+				blue = tempBlue;
+			}
+
+			colors[i] = red | (green << 8) | (blue << 16);
+		}
+		deviceFrameIndex._mFrameIndex[device] = (frameId + 1) % frameCount;
+	}
+}
+
+void BlendAnimation2D(const Effect& effect, DeviceFrameIndex& deviceFrameIndex, int device, EChromaSDKDevice2DEnum device2D, const char* animationName,
+	int* colors, int* tempColors)
+{
+	const int size = GetColorArraySize2D(device2D);
+	const int frameId = deviceFrameIndex._mFrameIndex[device];
+	const int frameCount = ChromaAnimationAPI::GetFrameCountName(animationName);
+	if (frameId < frameCount)
+	{
+		cout << animationName << ": " << (1 + frameId) << " of " << frameCount << endl;
+		float duration;
+		int animationId = ChromaAnimationAPI::GetAnimation(animationName);
+		ChromaAnimationAPI::GetFrame(animationId, frameId, &duration, tempColors, size);
+		for (int i = 0; i < size; ++i)
+		{
+			int oldColor = colors[i];
+			int oldRed = oldColor & 0xFF;
+			int oldGreen = (oldColor & 0xFF00) >> 8;
+			int oldBlue = (oldColor & 0xFF0000) >> 16;
+
+			int tempColor = tempColors[i];
+			int tempRed = tempColor & 0xFF;
+			int tempGreen = (tempColor & 0xFF00) >> 8;
+			int tempBlue = (tempColor & 0xFF0000) >> 16;
+
+			int red = 0;
+			int green = 0;
+			int blue = 0;
+
+			// add colors
+			/*
+			int red = (oldRed + tempRed) % 255;
+			int green = (oldGreen + tempGreen) % 255;
+			int blue = (oldGreen + tempBlue) % 255;
+			*/
+
+			// Use max R G B component
+			/*
+			int red = max(oldRed, tempRed);
+			int green = max(oldGreen, tempGreen);
+			int blue = max(oldGreen, tempBlue);
+			*/
+
+			// average R G B components
+			//int red = (oldRed + tempRed) / 2;
+			//int green = (oldGreen + tempGreen) / 2;
+			//int blue = (oldGreen + tempBlue) / 2;
+
+			//if (effect._mBlend.compare("lerp") == 0)
+			{
+				red = tempRed;
+				green = tempGreen;
+				blue = tempBlue;
+			}
+
+			colors[i] = red | (green << 8) | (blue << 16);
+		}
+		deviceFrameIndex._mFrameIndex[device] = (frameId + 1) % frameCount;
+	}
+}
+
+void BlendAnimations(Scene& scene,
+	int* colorsChromaLink, int* tempColorsChromaLink,
+	int* colorsHeadset, int* tempColorsHeadset,
+	int* colorsKeyboard, int* tempColorsKeyboard,
+	int* colorsKeypad, int* tempColorsKeypad,
+	int* colorsMouse, int* tempColorsMouse,
+	int* colorsMousepad, int* tempColorsMousepad)
+{
+	// blend active animations
+	vector<Effect>& effects = scene._mEffects;
+	for (vector<Effect>::iterator iter = effects.begin(); iter != effects.end(); ++iter)
+	{
+		Effect& effect = *iter;
+		if (effect._mState)
+		{
+			DeviceFrameIndex& deviceFrameIndex = effect._mFrameIndex;
+
+			//iterate all device types
+			for (int d = (int)EChromaSDKDeviceEnum::DE_ChromaLink; d < (int)EChromaSDKDeviceEnum::DE_MAX; ++d)
+			{
+				string animationName = effect._mAnimation;
+
+				switch ((EChromaSDKDeviceEnum)d)
+				{
+				case EChromaSDKDeviceEnum::DE_ChromaLink:
+					animationName += "_ChromaLink.chroma";
+					BlendAnimation1D(effect, deviceFrameIndex, d, EChromaSDKDevice1DEnum::DE_ChromaLink, animationName.c_str(), colorsChromaLink, tempColorsChromaLink);
+					break;
+				case EChromaSDKDeviceEnum::DE_Headset:
+					animationName += "_Headset.chroma";
+					BlendAnimation1D(effect, deviceFrameIndex, d, EChromaSDKDevice1DEnum::DE_Headset, animationName.c_str(), colorsHeadset, tempColorsHeadset);
+					break;
+				case EChromaSDKDeviceEnum::DE_Keyboard:
+					animationName += "_Keyboard.chroma";
+					BlendAnimation2D(effect, deviceFrameIndex, d, EChromaSDKDevice2DEnum::DE_Keyboard, animationName.c_str(), colorsKeyboard, tempColorsKeyboard);
+					break;
+				case EChromaSDKDeviceEnum::DE_Keypad:
+					animationName += "_Keypad.chroma";
+					BlendAnimation2D(effect, deviceFrameIndex, d, EChromaSDKDevice2DEnum::DE_Keypad, animationName.c_str(), colorsKeypad, tempColorsKeypad);
+					break;
+				case EChromaSDKDeviceEnum::DE_Mouse:
+					animationName += "_Mouse.chroma";
+					BlendAnimation2D(effect, deviceFrameIndex, d, EChromaSDKDevice2DEnum::DE_Mouse, animationName.c_str(), colorsMouse, tempColorsMouse);
+					break;
+				case EChromaSDKDeviceEnum::DE_Mousepad:
+					animationName += "_Mousepad.chroma";
+					BlendAnimation1D(effect, deviceFrameIndex, d, EChromaSDKDevice1DEnum::DE_Mousepad, animationName.c_str(), colorsMousepad, tempColorsMousepad);
+					break;
+				}
+			}
+		}
+	}
+}
+
 void WorkerChroma()
 {
 	const int sizeChromaLink = GetColorArraySize1D(EChromaSDKDevice1DEnum::DE_ChromaLink);
@@ -428,7 +626,9 @@ void WorkerChroma()
 	int* tempColorsMouse = new int[sizeMouse];
 	int* tempColorsMousepad = new int[sizeMousepad];
 
-	int ambientColor = ChromaAnimationAPI::GetRGB(0, 255, 0);
+	//int ambientColor = ChromaAnimationAPI::GetRGB(0, 255, 0);
+
+	int currentScene = 0;
 
 	vector<Scene> scenes;
 
@@ -437,11 +637,15 @@ void WorkerChroma()
 		//comment out for performance reasons
 		//lock_guard<mutex> guard(_sMutex); //make sure it's safe to do Chroma things
 
-		if (!_sLastPath.compare(_sPath))
+		if (!_sPath.empty() &&
+			_sLastPath.compare(_sPath) != 0)
 		{
 			_sLastPath = _sPath;
 			scenes = ReadJsonScenes();
 		}
+
+		// Change the current scene in the worker
+		currentScene = _mCurrentScene;
 
 		if (_sChromaInitialized)
 		{
@@ -460,6 +664,7 @@ void WorkerChroma()
 			SetupAnimation2D(ANIMATION_FINAL_MOUSE, EChromaSDKDevice2DEnum::DE_Mouse);
 			SetupAnimation1D(ANIMATION_FINAL_MOUSEPAD, EChromaSDKDevice1DEnum::DE_Mousepad);
 
+			/*
 			SetAmbientColor(ambientColor,
 				colorsChromaLink,
 				colorsHeadset,
@@ -467,6 +672,19 @@ void WorkerChroma()
 				colorsKeypad,
 				colorsMouse,
 				colorsMousepad);
+			*/
+
+			if (currentScene >= 0 && currentScene < (int)scenes.size())
+			{
+				Scene& scene = scenes[currentScene];
+				BlendAnimations(scene,
+					colorsChromaLink, tempColorsChromaLink,
+					colorsHeadset, tempColorsHeadset,
+					colorsKeyboard, tempColorsKeyboard,
+					colorsKeypad, tempColorsKeypad,
+					colorsMouse, tempColorsMouse,
+					colorsMousepad, tempColorsMousepad);
+			}
 
 			ChromaAnimationAPI::UpdateFrameName(ANIMATION_FINAL_CHROMA_LINK, 0, 0.1f, colorsChromaLink, sizeChromaLink);
 			ChromaAnimationAPI::UpdateFrameName(ANIMATION_FINAL_HEADSET, 0, 0.1f, colorsHeadset, sizeHeadset);
