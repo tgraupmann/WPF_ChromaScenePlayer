@@ -69,7 +69,7 @@ public:
 	vector<Effect> _mEffects;
 };
 
-static int _mCurrentScene = 1;
+static int _mCurrentScene = 0;
 
 bool StringStartsWith(const string& str, const string& search)
 {
