@@ -69,7 +69,7 @@ public:
 	vector<Effect> _mEffects;
 };
 
-static int _mCurrentScene = 0;
+static int _mCurrentScene = 1;
 
 bool StringStartsWith(const string& str, const string& search)
 {
@@ -427,6 +427,129 @@ void SetAmbientColor(int ambientColor,
 	}
 }
 
+int MultiplyColor(int color1, int color2) {
+	int redColor1 = color1 & 0xFF;
+	int greenColor1 = (color1 >> 8) & 0xFF;
+	int blueColor1 = (color1 >> 16) & 0xFF;
+
+	int redColor2 = color2 & 0xFF;
+	int greenColor2 = (color2 >> 8) & 0xFF;
+	int blueColor2 = (color2 >> 16) & 0xFF;
+
+	int red = floor(255 * ((redColor1 / 255.0f) * (redColor2 / 255.0f)));
+	int green = floor(255 * ((greenColor1 / 255.0f) * (greenColor2 / 255.0f)));
+	int blue = floor(255 * ((blueColor1 / 255.0f) * (blueColor2 / 255.0f)));
+
+	return ChromaAnimationAPI::GetRGB(red, green, blue);
+}
+
+int AverageColor(int color1, int color2) {
+	return ChromaAnimationAPI::LerpColor(color1, color2, 0.5f);
+}
+
+int AddColor(int color1, int color2) {
+	int redColor1 = color1 & 0xFF;
+	int greenColor1 = (color1 >> 8) & 0xFF;
+	int blueColor1 = (color1 >> 16) & 0xFF;
+
+	int redColor2 = color2 & 0xFF;
+	int greenColor2 = (color2 >> 8) & 0xFF;
+	int blueColor2 = (color2 >> 16) & 0xFF;
+
+	int red = min(redColor1 + redColor2, 255) & 0xFF;
+	int green = min(greenColor1 + greenColor2, 255) & 0xFF;
+	int blue = min(blueColor1 + blueColor2, 255) & 0xFF;
+
+	return ChromaAnimationAPI::GetRGB(red, green, blue);
+}
+
+int SubtractColor(int color1, int color2) {
+	int redColor1 = color1 & 0xFF;
+	int greenColor1 = (color1 >> 8) & 0xFF;
+	int blueColor1 = (color1 >> 16) & 0xFF;
+
+	int redColor2 = color2 & 0xFF;
+	int greenColor2 = (color2 >> 8) & 0xFF;
+	int blueColor2 = (color2 >> 16) & 0xFF;
+
+	int red = max(redColor1 - redColor2, 0) & 0xFF;
+	int green = max(greenColor1 - greenColor2, 0) & 0xFF;
+	int blue = max(blueColor1 - blueColor2, 0) & 0xFF;
+
+	return ChromaAnimationAPI::GetRGB(red, green, blue);
+}
+
+int MaxColor(int color1, int color2) {
+	int redColor1 = color1 & 0xFF;
+	int greenColor1 = (color1 >> 8) & 0xFF;
+	int blueColor1 = (color1 >> 16) & 0xFF;
+
+	int redColor2 = color2 & 0xFF;
+	int greenColor2 = (color2 >> 8) & 0xFF;
+	int blueColor2 = (color2 >> 16) & 0xFF;
+
+	int red = max(redColor1, redColor2) & 0xFF;
+	int green = max(greenColor1, greenColor2) & 0xFF;
+	int blue = max(blueColor1, blueColor2) & 0xFF;
+
+	return ChromaAnimationAPI::GetRGB(red, green, blue);
+}
+
+int MinColor(int color1, int color2) {
+	int redColor1 = color1 & 0xFF;
+	int greenColor1 = (color1 >> 8) & 0xFF;
+	int blueColor1 = (color1 >> 16) & 0xFF;
+
+	int redColor2 = color2 & 0xFF;
+	int greenColor2 = (color2 >> 8) & 0xFF;
+	int blueColor2 = (color2 >> 16) & 0xFF;
+
+	int red = min(redColor1, redColor2) & 0xFF;
+	int green = min(greenColor1, greenColor2) & 0xFF;
+	int blue = min(blueColor1, blueColor2) & 0xFF;
+
+	return ChromaAnimationAPI::GetRGB(red, green, blue);
+}
+
+int InvertColor(int color) {
+	int red = 255 - (color & 0xFF);
+	int green = 255 - ((color >> 8) & 0xFF);
+	int blue = 255 - ((color >> 16) & 0xFF);
+
+	return ChromaAnimationAPI::GetRGB(red, green, blue);
+}
+
+int MultiplyNonZeroTargetColorLerp(int color1, int color2, int inputColor) {
+	if (inputColor == 0)
+	{
+		return inputColor;
+	}
+	int red = (inputColor & 0xFF) / 255.0;
+	int green = ((inputColor & 0xFF00) >> 8) / 255.0;
+	int blue = ((inputColor & 0xFF0000) >> 16) / 255.0;
+	float t = (red + green + blue) / 3.0f;
+	return ChromaAnimationAPI::LerpColor(color1, color2, t);
+}
+
+int Thresh(int color1, int color2, int inputColor) {
+	int red = (inputColor & 0xFF) / 255.0;
+	int green = ((inputColor & 0xFF00) >> 8) / 255.0;
+	int blue = ((inputColor & 0xFF0000) >> 16) / 255.0;
+	float t = (red + green + blue) / 3.0f;
+	if (t == 0.0)
+	{
+		return 0;
+	}
+	if (t < 0.5)
+	{
+		return color1;
+	}
+	else
+	{
+		return color2;
+	}
+}
+
 void BlendAnimation1D(const Effect& effect, DeviceFrameIndex& deviceFrameIndex, int device, EChromaSDKDevice1DEnum device1d, const char* animationName,
 	int* colors, int* tempColors)
 {
@@ -435,57 +558,71 @@ void BlendAnimation1D(const Effect& effect, DeviceFrameIndex& deviceFrameIndex, 
 	const int frameCount = ChromaAnimationAPI::GetFrameCountName(animationName);
 	if (frameId < frameCount)
 	{
-		cout << animationName << ": " << (1 + frameId) << " of " << frameCount << endl;
+		//cout << animationName << ": " << (1 + frameId) << " of " << frameCount << endl;
 		float duration;
 		int animationId = ChromaAnimationAPI::GetAnimation(animationName);
 		ChromaAnimationAPI::GetFrame(animationId, frameId, &duration, tempColors, size);
 		for (int i = 0; i < size; ++i)
 		{
-			int oldColor = colors[i];
-			int oldRed = oldColor & 0xFF;
-			int oldGreen = (oldColor & 0xFF00) >> 8;
-			int oldBlue = (oldColor & 0xFF0000) >> 16;
+			int color1 = colors[i]; //target
+			int tempColor = tempColors[i]; //source
 
-			int tempColor = tempColors[i];
-			int tempRed = tempColor & 0xFF;
-			int tempGreen = (tempColor & 0xFF00) >> 8;
-			int tempBlue = (tempColor & 0xFF0000) >> 16;
-
-			int red = 0;
-			int green = 0;
-			int blue = 0;
-
-			// add colors
-			/*
-			int red = (oldRed + tempRed) % 255;
-			int green = (oldGreen + tempGreen) % 255;
-			int blue = (oldGreen + tempBlue) % 255;
-			*/
-
-			// Use max R G B component
-			/*
-			int red = max(oldRed, tempRed);
-			int green = max(oldGreen, tempGreen);
-			int blue = max(oldGreen, tempBlue);
-			*/
-
-			// average R G B components
-			/*
-			int red = (oldRed + tempRed) / 2;
-			int green = (oldGreen + tempGreen) / 2;
-			int blue = (oldGreen + tempBlue) / 2;
-			*/
-
-			//if (effect._mBlend.compare("lerp") == 0)
+			// BLEND
+			int color2;
+			if (effect._mBlend.compare("none") == 0)
 			{
-				red = tempRed;
-				green = tempGreen;
-				blue = tempBlue;
+				color2 = tempColor; //source
+			}
+			else if (effect._mBlend.compare("invert") == 0)
+			{
+				if (tempColor != 0) //source
+				{
+					color2 = InvertColor(tempColor); //source inverted
+				}
+				color2 = 0;
+			}
+			else if (effect._mBlend.compare("thresh") == 0)
+			{
+				color2 = Thresh(effect._mPrimaryColor, effect._mSecondaryColor, tempColor); //source
+			}
+			else // if (effect._mBlend.compare("lerp") == 0) //default
+			{
+				color2 = MultiplyNonZeroTargetColorLerp(effect._mPrimaryColor, effect._mSecondaryColor, tempColor); //source
 			}
 
-			colors[i] = red | (green << 8) | (blue << 16);
+			// MODE
+			if (effect._mMode.compare("max") == 0)
+			{
+				colors[i] = MaxColor(color1, color2);
+			}
+			else if (effect._mMode.compare("min") == 0)
+			{
+				colors[i] = MinColor(color1, color2);
+			}
+			else if (effect._mMode.compare("average") == 0)
+			{
+				colors[i] = AverageColor(color1, color2);
+			}
+			else if (effect._mMode.compare("multiply") == 0)
+			{
+				colors[i] = MultiplyColor(color1, color2);
+			}
+			else if (effect._mMode.compare("add") == 0)
+			{
+				colors[i] = AddColor(color1, color2);
+			}
+			else if (effect._mMode.compare("subtract") == 0)
+			{
+				colors[i] = SubtractColor(color1, color2);
+			}
+			else // if (effect._mMode.compare("replace") == 0) //default
+			{
+				if (color2 != 0) {
+					colors[i] = color2;
+				}
+			}
 		}
-		deviceFrameIndex._mFrameIndex[device] = (frameId + 1) % frameCount;
+		deviceFrameIndex._mFrameIndex[device] = (frameId + frameCount + effect._mSpeed) % frameCount;
 	}
 }
 
@@ -497,55 +634,71 @@ void BlendAnimation2D(const Effect& effect, DeviceFrameIndex& deviceFrameIndex, 
 	const int frameCount = ChromaAnimationAPI::GetFrameCountName(animationName);
 	if (frameId < frameCount)
 	{
-		cout << animationName << ": " << (1 + frameId) << " of " << frameCount << endl;
+		//cout << animationName << ": " << (1 + frameId) << " of " << frameCount << endl;
 		float duration;
 		int animationId = ChromaAnimationAPI::GetAnimation(animationName);
 		ChromaAnimationAPI::GetFrame(animationId, frameId, &duration, tempColors, size);
 		for (int i = 0; i < size; ++i)
 		{
-			int oldColor = colors[i];
-			int oldRed = oldColor & 0xFF;
-			int oldGreen = (oldColor & 0xFF00) >> 8;
-			int oldBlue = (oldColor & 0xFF0000) >> 16;
+			int color1 = colors[i]; //target
+			int tempColor = tempColors[i]; //source
 
-			int tempColor = tempColors[i];
-			int tempRed = tempColor & 0xFF;
-			int tempGreen = (tempColor & 0xFF00) >> 8;
-			int tempBlue = (tempColor & 0xFF0000) >> 16;
-
-			int red = 0;
-			int green = 0;
-			int blue = 0;
-
-			// add colors
-			/*
-			int red = (oldRed + tempRed) % 255;
-			int green = (oldGreen + tempGreen) % 255;
-			int blue = (oldGreen + tempBlue) % 255;
-			*/
-
-			// Use max R G B component
-			/*
-			int red = max(oldRed, tempRed);
-			int green = max(oldGreen, tempGreen);
-			int blue = max(oldGreen, tempBlue);
-			*/
-
-			// average R G B components
-			//int red = (oldRed + tempRed) / 2;
-			//int green = (oldGreen + tempGreen) / 2;
-			//int blue = (oldGreen + tempBlue) / 2;
-
-			//if (effect._mBlend.compare("lerp") == 0)
+			// BLEND
+			int color2;
+			if (effect._mBlend.compare("none") == 0)
 			{
-				red = tempRed;
-				green = tempGreen;
-				blue = tempBlue;
+				color2 = tempColor; //source
+			}
+			else if (effect._mBlend.compare("invert") == 0)
+			{
+				if (tempColor != 0) //source
+				{
+					color2 = InvertColor(tempColor); //source inverted
+				}
+				color2 = 0;
+			}
+			else if (effect._mBlend.compare("thresh") == 0)
+			{
+				color2 = Thresh(effect._mPrimaryColor, effect._mSecondaryColor, tempColor); //source
+			}
+			else // if (effect._mBlend.compare("lerp") == 0) //default
+			{
+				color2 = MultiplyNonZeroTargetColorLerp(effect._mPrimaryColor, effect._mSecondaryColor, tempColor); //source
 			}
 
-			colors[i] = red | (green << 8) | (blue << 16);
+			// MODE
+			if (effect._mMode.compare("max") == 0)
+			{
+				colors[i] = MaxColor(color1, color2);
+			}
+			else if (effect._mMode.compare("min") == 0)
+			{
+				colors[i] = MinColor(color1, color2);
+			}
+			else if (effect._mMode.compare("average") == 0)
+			{
+				colors[i] = AverageColor(color1, color2);
+			}
+			else if (effect._mMode.compare("multiply") == 0)
+			{
+				colors[i] = MultiplyColor(color1, color2);
+			}
+			else if (effect._mMode.compare("add") == 0)
+			{
+				colors[i] = AddColor(color1, color2);
+			}
+			else if (effect._mMode.compare("subtract") == 0)
+			{
+				colors[i] = SubtractColor(color1, color2);
+			}
+			else // if (effect._mMode.compare("replace") == 0) //default
+			{
+				if (color2 != 0) {
+					colors[i] = color2;
+				}
+			}
 		}
-		deviceFrameIndex._mFrameIndex[device] = (frameId + 1) % frameCount;
+		deviceFrameIndex._mFrameIndex[device] = (frameId + frameCount + effect._mSpeed) % frameCount;
 	}
 }
 
