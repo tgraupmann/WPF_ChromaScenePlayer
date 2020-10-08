@@ -4,23 +4,26 @@
 
 // When you are using pre-compiled headers, this source file is necessary for compilation to succeed.
 
-EXPORT_API LONG PlayerChromaInit()
+extern "C"
 {
-	return 0;
-}
-EXPORT_API LONG PlayerChromaUninit()
-{
-	return 0;
-}
-EXPORT_API int PlayerLoadScene(const char* path)
-{
-	return 0;
-}
-EXPORT_API int PlayerSelectScene(int sceneIndex)
-{
-	return 0;
-}
-EXPORT_API int PlayerQuit()
-{
-	return 0;
+	__declspec(dllexport) long PlayerChromaInit()
+	{
+		return 0;
+	}
+	__declspec(dllexport) long PlayerChromaUninit()
+	{
+		return 0;
+	}
+	__declspec(dllexport) int PlayerLoadScene(const char* path)
+	{
+		return 0;
+	}
+	__declspec(dllexport) int PlayerSelectScene(int sceneIndex)
+	{
+		return 0;
+	}
+	__declspec(dllexport) int PlayerQuit()
+	{
+		return 0;
+	}
 }

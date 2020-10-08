@@ -15,6 +15,7 @@ namespace WPF_ChromaScenePlayer
     public partial class MainWindow : Window
     {
         private List<Button> _mRefButtons = new List<Button>();
+        private bool _mInitialized = false;
 
         public MainWindow()
         {
@@ -23,7 +24,7 @@ namespace WPF_ChromaScenePlayer
 
         private void Window_Closed(object sender, EventArgs e)
         {
-
+            PlayerDLL.PlayerQuit();
         }
         
         private void AddButton(int i, string description)
@@ -76,11 +77,12 @@ namespace WPF_ChromaScenePlayer
             OpenFileDialog openFileDialog = new OpenFileDialog();
             if (openFileDialog.ShowDialog() == true)
             {
-                if (!string.IsNullOrEmpty(openFileDialog.FileName))
+                string path = openFileDialog.FileName;
+                if (!string.IsNullOrEmpty(path))
                 {
                     try
                     {
-                        string contents = File.ReadAllText(openFileDialog.FileName);
+                        string contents = File.ReadAllText(path);
                         JArray json = JArray.Parse(contents);
                         int i = 0;
                         foreach (JObject scene in json)
@@ -94,6 +96,8 @@ namespace WPF_ChromaScenePlayer
                     {
 
                     }
+
+                    PlayerDLL.LoadScene(path);
                 }
             }
         }
@@ -102,7 +106,20 @@ namespace WPF_ChromaScenePlayer
         {
             _mBtnPlay.Background = new SolidColorBrush(Color.FromArgb(255, 0, 255, 0));
             _mBtnStop.Background = new SolidColorBrush(Colors.LightGray);
-            _mTextStatus.Text = "STATUS: CHROMA [ACTIVE]";
+
+            if (!_mInitialized)
+            {
+                _mInitialized = true;
+                int result = PlayerDLL.PlayerChromaInit();
+                if (result == 0)
+                {
+                    _mTextStatus.Text = "STATUS: CHROMA [ACTIVE]";
+                }
+                else
+                {
+                    _mTextStatus.Text = string.Format("STATUS: CHROMA [ERROR] Code: {0}", result);
+                }
+            }
         }
 
         private void BtnStop_Click(object sender, RoutedEventArgs e)
@@ -110,6 +127,20 @@ namespace WPF_ChromaScenePlayer
             _mBtnStop.Background = new SolidColorBrush(Color.FromArgb(255, 0, 255, 0));
             _mBtnPlay.Background = new SolidColorBrush(Colors.LightGray);
             _mTextStatus.Text = "STATUS: CHROMA [OFFLINE]";
+
+            if (_mInitialized)
+            {
+                _mInitialized = false;
+                int result = PlayerDLL.PlayerChromaUninit();
+                if (result == 0)
+                {
+                    _mTextStatus.Text = "STATUS: CHROMA [OFFLINE]";
+                }
+                else
+                {
+                    _mTextStatus.Text = string.Format("STATUS: CHROMA [ERROR] Code: {0}", result);
+                }
+            }
         }
 
         private void BtnScene_Click(object sender, RoutedEventArgs e)
@@ -119,6 +150,7 @@ namespace WPF_ChromaScenePlayer
                 if (button == sender)
                 {
                     button.Background = new SolidColorBrush(Color.FromArgb(255, 0, 255, 0));
+                    PlayerDLL.PlayerSelectScene((int)button.DataContext);
                 }
                 else
                 {
