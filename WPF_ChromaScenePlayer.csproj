@@ -106,7 +106,7 @@
     <Content Include="CChromaEditorLibrary64.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Debug\DLL_ChromaScenePlayer.dll" Link="DLL_ChromaScenePlayer.dll">
+    <Content Include="$(Configuration)\DLL_ChromaScenePlayer.dll" Link="DLL_ChromaScenePlayer.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
