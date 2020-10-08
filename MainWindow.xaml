@@ -5,7 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WPF_ChromaScenePlayer"
         mc:Ignorable="d"
-        Title="Chroma RGB Scene Player" Width="1024" Height="768" Background="Black" Closed="Window_Closed">
+        Title="Chroma RGB Scene Player" Width="1024" Height="768" Background="Black"
+        Loaded="Window_Loaded"
+        Closed="Window_Closed">
     <StackPanel>
         <TextBlock Text="Chroma RGB Scene Player" Foreground="White" FontSize="20" Margin="20"/>
         <StackPanel Orientation="Horizontal" Margin="20,0,0,0">

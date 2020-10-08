@@ -12,11 +12,13 @@
 
 extern "C"
 {
+	__declspec(dllexport) int ApplicationStart();
+	__declspec(dllexport) int ApplicationQuit();
+
 	__declspec(dllexport) long PlayerChromaInit();
 	__declspec(dllexport) long PlayerChromaUninit();
 	__declspec(dllexport) int PlayerLoadScene(const char* path);
 	__declspec(dllexport) int PlayerSelectScene(int sceneIndex);
-	__declspec(dllexport) int PlayerQuit();
 }
 
 #endif //PCH_H

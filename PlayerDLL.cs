@@ -14,6 +14,12 @@ namespace WPF_ChromaScenePlayer
 #endif
 
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int ApplicationStart();
+
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int ApplicationQuit();
+
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
         public static extern int PlayerChromaInit();
 
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
@@ -24,9 +30,6 @@ namespace WPF_ChromaScenePlayer
 
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
         public static extern int PlayerSelectScene(int sceneIndex);
-
-        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int PlayerQuit();
 
         public static int LoadScene(string path)
         {

@@ -22,9 +22,14 @@ namespace WPF_ChromaScenePlayer
             InitializeComponent();
         }
 
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            PlayerDLL.ApplicationStart();
+        }
+
         private void Window_Closed(object sender, EventArgs e)
         {
-            PlayerDLL.PlayerQuit();
+            PlayerDLL.ApplicationQuit();
         }
         
         private void AddButton(int i, string description)
