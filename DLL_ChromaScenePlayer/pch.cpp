@@ -22,7 +22,6 @@ static bool _sChromaInitialized = false;
 static bool _sWaitForExit = true;
 static mutex _sMutex;
 static std::thread* _sThreadChroma = nullptr;
-static string _sLastPath;
 static string _sPath;
 
 // This final animation will have a single frame
@@ -790,11 +789,10 @@ void WorkerChroma()
 		//comment out for performance reasons
 		//lock_guard<mutex> guard(_sMutex); //make sure it's safe to do Chroma things
 
-		if (!_sPath.empty() &&
-			_sLastPath.compare(_sPath) != 0)
+		if (!_sPath.empty())
 		{
-			_sLastPath = _sPath;
 			scenes = ReadJsonScenes();
+			_sPath = ""; //watch for another change
 		}
 
 		// Change the current scene in the worker
