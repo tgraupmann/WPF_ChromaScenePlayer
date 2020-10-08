@@ -1,0 +1,39 @@
+﻿<Window x:Class="WPF_ChromaScenePlayer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WPF_ChromaScenePlayer"
+        mc:Ignorable="d"
+        Title="Chroma RGB Scene Player" Width="1024" Height="768" Background="Black" Closed="Window_Closed">
+    <StackPanel>
+        <TextBlock Text="Chroma RGB Scene Player" Foreground="White" FontSize="20" Margin="20"/>
+        <StackPanel Orientation="Horizontal" Margin="20,0,0,0">
+            <Button Name="_mBtnLoadScene" HorizontalAlignment="Left" Background="#0F0" Click="BtnLoadScene_Click" Margin="20,0,0,0">
+                <TextBlock Text="LOAD SCENE" FontSize="16" Padding="10"/>
+            </Button>
+        </StackPanel>
+        <TextBlock Text="STATUS: CHROMA [OFFLINE]" Foreground="White" FontSize="20" Margin="20, 20, 0, 0" HorizontalAlignment="Left"/>
+        <StackPanel Orientation="Horizontal" Margin="20">
+            <Button Name="_mBtnPlay" HorizontalAlignment="Left" Click="BtnPlay_Click"  Margin="20,0,0,0">
+                <TextBlock Text="PLAY" FontSize="16" Padding="10"/>
+            </Button>
+            <Button Name="_mBtnStop" HorizontalAlignment="Left" Background="#0F0" Click="BtnStop_Click"  Margin="20,0,0,0">
+                <TextBlock Text="STOP" FontSize="16" Padding="10"/>
+            </Button>
+        </StackPanel>
+        <TextBlock Text="SCENES:" Foreground="White" FontSize="20" Margin="20, 0, 0, 0" HorizontalAlignment="Left"/>
+        <ScrollViewer Height="460">
+            <StackPanel Name="_mButtons" Height="2000" Background="#002">
+                <!--
+                <StackPanel Orientation="Horizontal" Margin="20" Background="#222" HorizontalAlignment="Stretch">
+                    <Button x:Name="_mBtnScene" Click="BtnScene_Click">
+                        <TextBlock Text="1" Foreground="Black" Padding="10"/>
+                    </Button>
+                    <TextBlock Text="Description" Foreground="White" Margin="10" HorizontalAlignment="Stretch"/>
+                </StackPanel>
+                -->
+            </StackPanel>
+        </ScrollViewer>
+    </StackPanel>
+</Window>

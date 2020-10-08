@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30204.135
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WPF_ChromaScenePlayer", "WPF_ChromaScenePlayer.csproj", "{1F06D43B-EEAE-48AD-B53D-FD43BC634A75}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1F06D43B-EEAE-48AD-B53D-FD43BC634A75}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F06D43B-EEAE-48AD-B53D-FD43BC634A75}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1F06D43B-EEAE-48AD-B53D-FD43BC634A75}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1F06D43B-EEAE-48AD-B53D-FD43BC634A75}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A253D827-6039-422D-ACC5-2D597270D901}
+	EndGlobalSection
+EndGlobal
