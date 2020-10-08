@@ -21,6 +21,8 @@ static bool _sChromaInitialized = false;
 static bool _sWaitForExit = true;
 static mutex _sMutex;
 static std::thread* _sThreadChroma = nullptr;
+static string _sLastPath;
+static string _sPath;
 
 // This final animation will have a single frame
 // Any color changes will immediately display in the next frame update.
@@ -30,6 +32,177 @@ const char* ANIMATION_FINAL_KEYBOARD = "Dynamic\\Final_Keyboard.chroma";
 const char* ANIMATION_FINAL_KEYPAD = "Dynamic\\Final_Keypad.chroma";
 const char* ANIMATION_FINAL_MOUSE = "Dynamic\\Final_Mouse.chroma";
 const char* ANIMATION_FINAL_MOUSEPAD = "Dynamic\\Final_Mousepad.chroma";
+
+struct Effect
+{
+public:
+	string _mAnimation = "";
+	bool _mState = false;
+	int _mPrimaryColor = 0;
+	int _mSecondaryColor = 0;
+	int _mSpeed = 1;
+	string _mBlend = "";
+	string _mMode = "";
+};
+
+struct Scene
+{
+public:
+	vector<Effect> _mEffects;
+};
+
+bool StringStartsWith(const string& str, const string& search)
+{
+	return (str.rfind(search, 0) == 0);
+}
+
+int StringParseInt(const string& str, int base)
+{
+	return stoi(str, nullptr, base);
+}
+
+// trim from start
+string StringLTrim(std::string s) {
+	s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
+		return !std::isspace(ch);
+		}));
+	return s;
+}
+
+// trim from end
+string StringRTrim(std::string s) {
+	s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
+		return !std::isspace(ch);
+		}).base(), s.end());
+	return s;
+}
+
+// trim from both ends
+string StringTrim(std::string s) {
+	s = StringLTrim(s);
+	s = StringRTrim(s);
+	return s;
+}
+
+vector<string> StringSplit(string str, const string& delimiter)
+{
+	vector<string> result;
+
+	size_t pos = 0;
+	std::string token;
+	while ((pos = str.find(delimiter)) != std::string::npos) {
+		token = str.substr(0, pos);
+		result.push_back(token);
+		str.erase(0, pos + delimiter.length());
+	}
+	result.push_back(str);
+
+	return result;
+}
+
+int RgbStrToInt(const string& rgbStr) {
+	vector<string> step1 = StringSplit(rgbStr, "(");
+	vector<string> step2 = StringSplit(step1[1], ")");
+	vector<string> step3 = StringSplit(step2[0], ",");
+	vector<string> components = step3;
+	int red = StringParseInt(StringTrim(components[0]), 10);
+	int green = StringParseInt(StringTrim(components[1]), 10);
+	int blue = StringParseInt(StringTrim(components[2]), 10);
+	return (red & 0xFF) | ((green & 0xFF) << 8) | ((blue & 0xFF) << 16);
+}
+
+int HexStrToInt(const string& hexStr) {
+	int val = StringParseInt(StringSplit(hexStr, "#")[1], 16);
+	int red = (val >> 16) & 0xFF;
+	int green = (val >> 8) & 0xFF;
+	int blue = val & 0xFF;
+	return (red & 0xFF) | ((green & 0xFF) << 8) | ((blue & 0xFF) << 16);
+}
+
+int ReadColor(string strRGB)
+{
+	if (StringStartsWith(strRGB, "rgb")) {
+		return RgbStrToInt(strRGB);
+	}
+	else {
+		return HexStrToInt(strRGB);
+	}
+}
+
+vector<Scene> ReadJsonScenes()
+{
+	vector<Scene> result;
+
+	std::ifstream inFile;
+	inFile.open(_sPath.c_str()); //open the input file
+
+	std::stringstream strStream;
+	strStream << inFile.rdbuf(); //read the file
+	std::string str = strStream.str(); //str holds the content of the file
+
+	if (str.empty())
+	{
+		return result;
+	}
+
+	Json::Value root;
+	Json::Reader reader;
+	reader.parse(str, root);
+
+	vector<Scene> newScenes;
+	if (root.isArray())
+	{
+		for (Json::Value::ArrayIndex i = 0; i != root.size(); i++)
+		{
+			Json::Value scene = root[i];
+			Scene newScene;
+			if (scene.isMember("effects"))
+			{
+				Json::Value effects = scene["effects"];
+				if (effects.isArray())
+				{
+					for (Json::Value::ArrayIndex j = 0; j != effects.size(); j++)
+					{
+						Json::Value effect = effects[j];
+						Effect newEffect;
+						if (effect.isMember("animation"))
+						{
+							newEffect._mAnimation = effect["animation"].asString();
+						}
+						if (effect.isMember("state"))
+						{
+							newEffect._mState = effect["state"].asBool();
+						}
+						if (effect.isMember("primaryColor"))
+						{
+							newEffect._mPrimaryColor = ReadColor(effect["primaryColor"].asString());
+						}
+						if (effect.isMember("secondaryColor"))
+						{
+							newEffect._mSecondaryColor = ReadColor(effect["secondaryColor"].asString());
+						}
+						if (effect.isMember("speed"))
+						{
+							newEffect._mSpeed = effect["speed"].asInt();
+						}
+						if (effect.isMember("blend"))
+						{
+							newEffect._mBlend = effect["blend"].asString();
+						}
+						if (effect.isMember("mode"))
+						{
+							newEffect._mMode = effect["mode"].asString();
+						}
+						newScene._mEffects.push_back(newEffect);
+					}
+				}
+			}
+			newScenes.push_back(newScene);
+		}
+	}
+
+	return newScenes;
+}
 
 extern "C"
 {
@@ -124,33 +297,7 @@ extern "C"
 
 	__declspec(dllexport) int PlayerLoadScene(const char* path)
 	{
-		lock_guard<mutex> guard(_sMutex); //make sure we aren't doing things while animations are playing
-
-		std::ifstream inFile;
-		inFile.open(path); //open the input file
-
-		std::stringstream strStream;
-		strStream << inFile.rdbuf(); //read the file
-		std::string str = strStream.str(); //str holds the content of the file
-
-		if (str.empty())
-		{
-			return -1;
-		}
-
-		// create sample json
-		Json::Value json;
-		json[0]["name"] = "Jabberwock";
-		json[0]["chapter"] = 1;
-		json[1]["name"] = "Cheshire Cat";
-		json[1]["chapter"] = 6;
-		json[2]["name"] = "Mad Hatter";
-		json[2]["chapter"] = 7;
-
-		Json::FastWriter fastWriter;
-		std::string strJson = fastWriter.write(json);
-		cout << strJson << endl;
-
+		_sPath = path;
 		return 0;
 	}
 
@@ -283,10 +430,18 @@ void WorkerChroma()
 
 	int ambientColor = ChromaAnimationAPI::GetRGB(0, 255, 0);
 
+	vector<Scene> scenes;
+
 	while (_sWaitForExit)
 	{
 		//comment out for performance reasons
 		//lock_guard<mutex> guard(_sMutex); //make sure it's safe to do Chroma things
+
+		if (!_sLastPath.compare(_sPath))
+		{
+			_sLastPath = _sPath;
+			scenes = ReadJsonScenes();
+		}
 
 		if (_sChromaInitialized)
 		{
