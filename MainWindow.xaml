@@ -13,9 +13,9 @@
                 <TextBlock Text="LOAD SCENE" FontSize="16" Padding="10"/>
             </Button>
         </StackPanel>
-        <TextBlock Text="STATUS: CHROMA [OFFLINE]" Foreground="White" FontSize="20" Margin="20, 20, 0, 0" HorizontalAlignment="Left"/>
+        <TextBlock Name="_mTextStatus" Text="STATUS: CHROMA [OFFLINE]" Foreground="White" FontSize="20" Margin="20, 20, 0, 0" HorizontalAlignment="Left"/>
         <StackPanel Orientation="Horizontal" Margin="20">
-            <Button Name="_mBtnPlay" HorizontalAlignment="Left" Click="BtnPlay_Click"  Margin="20,0,0,0">
+            <Button Name="_mBtnPlay" HorizontalAlignment="Left" Click="BtnPlay_Click"  Margin="20,0,0,0" Background="LightGray">
                 <TextBlock Text="PLAY" FontSize="16" Padding="10"/>
             </Button>
             <Button Name="_mBtnStop" HorizontalAlignment="Left" Background="#0F0" Click="BtnStop_Click"  Margin="20,0,0,0">
