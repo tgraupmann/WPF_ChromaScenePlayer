@@ -29,7 +29,14 @@ namespace WPF_ChromaScenePlayer
 
         private void Window_Closed(object sender, EventArgs e)
         {
-            PlayerDLL.ApplicationQuit();
+            try
+            {
+                PlayerDLL.ApplicationQuit();
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine("Failed to quit application. Exception={0}", ex);
+            }
         }
         
         private void AddButton(int i, string description)
@@ -102,7 +109,11 @@ namespace WPF_ChromaScenePlayer
 
                     }
 
-                    PlayerDLL.LoadScene(path);
+                    int result = PlayerDLL.LoadScene(path);
+                    if (result != 0)
+                    {
+                        Console.Error.WriteLine("Failed to load scene! {0}", path);
+                    }
                 }
             }
         }

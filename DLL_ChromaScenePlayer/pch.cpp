@@ -6,6 +6,9 @@ typedef unsigned char byte;
 #include "Razer\ChromaAnimationAPI.h"
 #include <mutex>
 #include <iostream>
+#include <fstream>
+#include <iostream>
+#include <sstream>
 #include <json/json.h>
 
 using namespace ChromaSDK;
@@ -123,6 +126,18 @@ extern "C"
 	{
 		lock_guard<mutex> guard(_sMutex); //make sure we aren't doing things while animations are playing
 
+		std::ifstream inFile;
+		inFile.open(path); //open the input file
+
+		std::stringstream strStream;
+		strStream << inFile.rdbuf(); //read the file
+		std::string str = strStream.str(); //str holds the content of the file
+
+		if (str.empty())
+		{
+			return -1;
+		}
+
 		// create sample json
 		Json::Value json;
 		json[0]["name"] = "Jabberwock";
@@ -131,9 +146,6 @@ extern "C"
 		json[1]["chapter"] = 6;
 		json[2]["name"] = "Mad Hatter";
 		json[2]["chapter"] = 7;
-
-		cout << "Json:" << endl;
-		//cout << json << endl;
 
 		Json::FastWriter fastWriter;
 		std::string strJson = fastWriter.write(json);
