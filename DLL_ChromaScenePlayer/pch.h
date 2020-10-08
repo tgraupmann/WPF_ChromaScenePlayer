@@ -21,4 +21,6 @@ extern "C"
 	__declspec(dllexport) int PlayerSelectScene(int sceneIndex);
 }
 
+void WorkerChroma();
+
 #endif //PCH_H

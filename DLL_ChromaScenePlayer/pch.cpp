@@ -15,6 +15,7 @@ static bool _sInitializedAPI = false;
 static bool _sChromaInitialized = false;
 static bool _sWaitForExit = true;
 static mutex _sMutex;
+static std::thread* _sThreadChroma = nullptr;
 
 extern "C"
 {
@@ -32,15 +33,22 @@ extern "C"
 		}
 
 		// start the main thread worker
+		_sThreadChroma = new std::thread(&WorkerChroma);
+		_sThreadChroma->detach();
 
 		return 0;
 	}
 
 	__declspec(dllexport) int ApplicationQuit()
 	{
+		_sWaitForExit = false;
+		if (_sThreadChroma != nullptr)
+		{
+			_sThreadChroma->join();
+		}
+
 		lock_guard<mutex> guard(_sMutex); //make sure we aren't doing things while animations are playing
 
-		_sWaitForExit = false;
 		if (_sInitializedAPI)
 		{
 			if (ChromaAnimationAPI::IsInitialized())
@@ -50,6 +58,7 @@ extern "C"
 				return ChromaAnimationAPI::Uninit();
 			}
 		}
+
 		return 0;
 	}
 
@@ -76,6 +85,7 @@ extern "C"
 		}
 		return result;
 	}
+
 	__declspec(dllexport) long PlayerChromaUninit()
 	{
 		lock_guard<mutex> guard(_sMutex); //make sure we aren't doing things while animations are playing
@@ -94,18 +104,30 @@ extern "C"
 				return result;
 			}
 		}
+
 		return 0;
 	}
+
 	__declspec(dllexport) int PlayerLoadScene(const char* path)
 	{
 		lock_guard<mutex> guard(_sMutex); //make sure we aren't doing things while animations are playing
 
 		return 0;
 	}
+
 	__declspec(dllexport) int PlayerSelectScene(int sceneIndex)
 	{
 		lock_guard<mutex> guard(_sMutex); //make sure we aren't doing things while animations are playing
 
 		return 0;
 	}	
+}
+
+void WorkerChroma()
+{
+	while (_sWaitForExit)
+	{
+		// update at 10 FPS
+		this_thread::sleep_for(chrono::milliseconds(100));
+	}
 }
