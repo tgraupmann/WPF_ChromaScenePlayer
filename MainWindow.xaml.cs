@@ -86,8 +86,6 @@ namespace WPF_ChromaScenePlayer
             _mButtons.Children.Clear();
             _mRefButtons.Clear();
 
-            PlayerDLL.PlayerSelectScene(0); //reset scene selection
-
             OpenFileDialog openFileDialog = new OpenFileDialog();
             if (openFileDialog.ShowDialog() == true)
             {
@@ -112,7 +110,11 @@ namespace WPF_ChromaScenePlayer
                     }
 
                     int result = PlayerDLL.LoadScene(path);
-                    if (result != 0)
+                    if (result == 0)
+                    {
+                        PlayerDLL.PlayerSelectScene(0); //reset scene selection
+                    }
+                    else
                     {
                         Console.Error.WriteLine("Failed to load scene! {0}", path);
                     }
