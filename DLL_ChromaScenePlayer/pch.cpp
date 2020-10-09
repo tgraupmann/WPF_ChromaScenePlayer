@@ -523,17 +523,17 @@ int MultiplyNonZeroTargetColorLerp(int color1, int color2, int inputColor) {
 	{
 		return inputColor;
 	}
-	int red = (inputColor & 0xFF) / 255.0;
-	int green = ((inputColor & 0xFF00) >> 8) / 255.0;
-	int blue = ((inputColor & 0xFF0000) >> 16) / 255.0;
+	float red = (inputColor & 0xFF) / 255.0f;
+	float green = ((inputColor & 0xFF00) >> 8) / 255.0f;
+	float blue = ((inputColor & 0xFF0000) >> 16) / 255.0f;
 	float t = (red + green + blue) / 3.0f;
 	return ChromaAnimationAPI::LerpColor(color1, color2, t);
 }
 
 int Thresh(int color1, int color2, int inputColor) {
-	int red = (inputColor & 0xFF) / 255.0;
-	int green = ((inputColor & 0xFF00) >> 8) / 255.0;
-	int blue = ((inputColor & 0xFF0000) >> 16) / 255.0;
+	float red = (inputColor & 0xFF) / 255.0f;
+	float green = ((inputColor & 0xFF00) >> 8) / 255.0f;
+	float blue = ((inputColor & 0xFF0000) >> 16) / 255.0f;
 	float t = (red + green + blue) / 3.0f;
 	if (t == 0.0)
 	{
@@ -578,7 +578,10 @@ void BlendAnimation1D(const Effect& effect, DeviceFrameIndex& deviceFrameIndex, 
 				{
 					color2 = InvertColor(tempColor); //source inverted
 				}
-				color2 = 0;
+				else
+				{
+					color2 = 0;
+				}
 			}
 			else if (effect._mBlend.compare("thresh") == 0)
 			{
@@ -654,7 +657,10 @@ void BlendAnimation2D(const Effect& effect, DeviceFrameIndex& deviceFrameIndex, 
 				{
 					color2 = InvertColor(tempColor); //source inverted
 				}
-				color2 = 0;
+				else
+				{
+					color2 = 0;
+				}
 			}
 			else if (effect._mBlend.compare("thresh") == 0)
 			{
