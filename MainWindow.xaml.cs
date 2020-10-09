@@ -86,6 +86,8 @@ namespace WPF_ChromaScenePlayer
             _mButtons.Children.Clear();
             _mRefButtons.Clear();
 
+            PlayerDLL.PlayerSelectScene(0); //reset scene selection
+
             OpenFileDialog openFileDialog = new OpenFileDialog();
             if (openFileDialog.ShowDialog() == true)
             {

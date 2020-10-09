@@ -13,3 +13,6 @@ rmdir /s /q "x64"
 rmdir /s /q "DLL_ChromaScenePlayer\Debug"
 rmdir /s /q "DLL_ChromaScenePlayer\Release"
 rmdir /s /q "DLL_ChromaScenePlayer\x64"
+
+xcopy /D /E /C /I /F /Y Animations bin\Debug\Animations
+xcopy /D /E /C /I /F /Y Animations bin\Release\Animations
