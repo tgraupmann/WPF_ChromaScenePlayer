@@ -10,6 +10,7 @@ typedef unsigned char byte;
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <tchar.h>
 #include <json/json.h>
 
 using namespace ChromaSDK;
@@ -20,7 +21,6 @@ using namespace std;
 static bool _sInitializedAPI = false;
 static bool _sChromaInitialized = false;
 static bool _sWaitForExit = true;
-static mutex _sMutex;
 static std::thread* _sThreadChroma = nullptr;
 static string _sPath;
 
@@ -225,9 +225,14 @@ vector<Scene> ReadJsonScenes()
 
 extern "C"
 {
-	__declspec(dllexport) int ApplicationStart()
+	__declspec(dllexport) int ApplicationStart(const char* workingDirectory)
 	{
-		lock_guard<mutex> guard(_sMutex); //make sure we aren't doing things while animations are playing
+		string strDirectory = workingDirectory;
+		wstring wstrDirectory(strDirectory.begin(), strDirectory.end());
+		if (!SetCurrentDirectory(wstrDirectory.c_str()))
+		{
+			fprintf(stderr, "SetCurrentDirectory failed (%d)\n", GetLastError());
+		}
 
 		if (!_sInitializedAPI)
 		{
@@ -253,8 +258,6 @@ extern "C"
 			_sThreadChroma->join();
 		}
 
-		lock_guard<mutex> guard(_sMutex); //make sure we aren't doing things while animations are playing
-
 		if (_sInitializedAPI)
 		{
 			if (ChromaAnimationAPI::IsInitialized())
@@ -270,8 +273,6 @@ extern "C"
 
 	__declspec(dllexport) long PlayerChromaInit()
 	{
-		lock_guard<mutex> guard(_sMutex); //make sure we aren't doing things while animations are playing
-
 		if (!_sInitializedAPI)
 		{
 			if (ChromaAnimationAPI::InitAPI() != 0)
@@ -284,7 +285,25 @@ extern "C"
 		{
 			return 0;
 		}
-		RZRESULT result = ChromaAnimationAPI::Init();
+		ChromaSDK::APPINFOTYPE appInfo = {};
+
+		_tcscpy_s(appInfo.Title, 256, _T("WPF Chroma Scene Player"));
+		_tcscpy_s(appInfo.Description, 1024, _T("A sample application using Razer Chroma SDK"));
+		_tcscpy_s(appInfo.Author.Name, 256, _T("Tim Graupmann"));
+		_tcscpy_s(appInfo.Author.Contact, 256, _T("https://github.com/tgraupmann/WPF_ChromaScenePlayer"));
+
+		//appInfo.SupportedDevice = 
+		//    0x01 | // Keyboards
+		//    0x02 | // Mice
+		//    0x04 | // Headset
+		//    0x08 | // Mousepads
+		//    0x10 | // Keypads
+		//    0x20   // ChromaLink devices
+		//    ;
+		appInfo.SupportedDevice = (0x01 | 0x02 | 0x04 | 0x08 | 0x10 | 0x20);
+		appInfo.Category = 1;
+
+		RZRESULT result = ChromaAnimationAPI::InitSDK(&appInfo);
 		if (result == 0)
 		{
 			_sChromaInitialized = true;
@@ -294,8 +313,6 @@ extern "C"
 
 	__declspec(dllexport) long PlayerChromaUninit()
 	{
-		lock_guard<mutex> guard(_sMutex); //make sure we aren't doing things while animations are playing
-
 		if (_sInitializedAPI)
 		{
 			if (_sChromaInitialized)
@@ -322,8 +339,6 @@ extern "C"
 
 	__declspec(dllexport) int PlayerSelectScene(int sceneIndex)
 	{
-		lock_guard<mutex> guard(_sMutex); //make sure we aren't doing things while animations are playing
-
 		_mCurrentScene = sceneIndex;
 
 		return 0;
@@ -792,9 +807,6 @@ void WorkerChroma()
 
 	while (_sWaitForExit)
 	{
-		//comment out for performance reasons
-		//lock_guard<mutex> guard(_sMutex); //make sure it's safe to do Chroma things
-
 		if (!_sPath.empty())
 		{
 			scenes = ReadJsonScenes();

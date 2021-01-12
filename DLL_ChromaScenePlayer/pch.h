@@ -12,7 +12,7 @@
 
 extern "C"
 {
-	__declspec(dllexport) int ApplicationStart();
+	__declspec(dllexport) int ApplicationStart(const char* workingDirectory);
 	__declspec(dllexport) int ApplicationQuit();
 
 	__declspec(dllexport) long PlayerChromaInit();

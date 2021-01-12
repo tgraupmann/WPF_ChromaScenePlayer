@@ -14,7 +14,7 @@ namespace WPF_ChromaScenePlayer
 #endif
 
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int ApplicationStart();
+        public static extern int ApplicationStart(string workingDirectory);
 
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
         public static extern int ApplicationQuit();

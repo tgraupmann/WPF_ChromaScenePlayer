@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -24,7 +25,10 @@ namespace WPF_ChromaScenePlayer
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            PlayerDLL.ApplicationStart();
+            string exePath = Assembly.GetEntryAssembly().Location;
+            FileInfo fi = new FileInfo(exePath);
+            string workingDirectory = fi.Directory.FullName;
+            PlayerDLL.ApplicationStart(workingDirectory);
         }
 
         private void Window_Closed(object sender, EventArgs e)
